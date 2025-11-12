@@ -10,7 +10,7 @@ echo "Starting FastAPI backend on port 8000..."
 uvicorn main:app --host 0.0.0.0 --port 8000 &
 
 # Wait for the FastAPI server to start up. This is CRUCIAL.
-sleep 7 
+sleep 30 
 
 # 2. Start Streamlit Frontend
 echo "Starting Streamlit frontend..."
