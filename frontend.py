@@ -1,10 +1,16 @@
-
 import streamlit as st
 import requests
 import base64
 import urllib.parse
+import os
 
 st.set_page_config(page_title="Simple Social", layout="wide")
+
+# --- FIX: Read API Base URL from environment variable ---
+# When deployed, Streamlit Cloud should set API_BASE_URL.
+# Default to localhost:8000 for local development.
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+st.sidebar.caption(f"API Target: {API_BASE_URL}") 
 
 # Initialize session state
 if 'token' not in st.session_state:
@@ -32,35 +38,40 @@ def login_page():
 
         with col1:
             if st.button("Login", type="primary", use_container_width=True):
-                # Login using FastAPI Users JWT endpoint
-                login_data = {"username": email, "password": password}
-                response = requests.post("http://localhost:8000/auth/jwt/login", data=login_data)
+                with st.spinner("Logging in..."):
+                    # Login using FastAPI Users JWT endpoint
+                    login_data = {"username": email, "password": password}
+                    # FIX APPLIED HERE: Use API_BASE_URL
+                    response = requests.post(f"{API_BASE_URL}/auth/jwt/login", data=login_data)
 
-                if response.status_code == 200:
-                    token_data = response.json()
-                    st.session_state.token = token_data["access_token"]
+                    if response.status_code == 200:
+                        token_data = response.json()
+                        st.session_state.token = token_data["access_token"]
 
-                    # Get user info
-                    user_response = requests.get("http://localhost:8000/users/me", headers=get_headers())
-                    if user_response.status_code == 200:
-                        st.session_state.user = user_response.json()
-                        st.rerun()
+                        # Get user info
+                        # FIX APPLIED HERE: Use API_BASE_URL
+                        user_response = requests.get(f"{API_BASE_URL}/users/me", headers=get_headers())
+                        if user_response.status_code == 200:
+                            st.session_state.user = user_response.json()
+                            st.rerun()
+                        else:
+                            st.error("Failed to get user info")
                     else:
-                        st.error("Failed to get user info")
-                else:
-                    st.error("Invalid email or password!")
+                        st.error("Invalid email or password!")
 
         with col2:
             if st.button("Sign Up", type="secondary", use_container_width=True):
-                # Register using FastAPI Users
-                signup_data = {"email": email, "password": password}
-                response = requests.post("http://localhost:8000/auth/register", json=signup_data)
+                with st.spinner("Registering..."):
+                    # Register using FastAPI Users
+                    signup_data = {"email": email, "password": password}
+                    # FIX APPLIED HERE: Use API_BASE_URL
+                    response = requests.post(f"{API_BASE_URL}/auth/register", json=signup_data)
 
-                if response.status_code == 201:
-                    st.success("Account created! Click Login now.")
-                else:
-                    error_detail = response.json().get("detail", "Registration failed")
-                    st.error(f"Registration failed: {error_detail}")
+                    if response.status_code == 201:
+                        st.success("Account created! Click Login now.")
+                    else:
+                        error_detail = response.json().get("detail", "Registration failed")
+                        st.error(f"Registration failed: {error_detail}")
     else:
         st.info("Enter your email and password above")
 
@@ -75,13 +86,14 @@ def upload_page():
         with st.spinner("Uploading..."):
             files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
             data = {"caption": caption}
-            response = requests.post("http://localhost:8000/upload", files=files, data=data, headers=get_headers())
+            # FIX APPLIED HERE: Use API_BASE_URL
+            response = requests.post(f"{API_BASE_URL}/upload", files=files, data=data, headers=get_headers())
 
             if response.status_code == 200:
                 st.success("Posted!")
                 st.rerun()
             else:
-                st.error("Upload failed!")
+                st.error("Upload failed! Check backend logs.")
 
 
 def encode_text_for_overlay(text):
@@ -106,6 +118,11 @@ def create_transformed_url(original_url, transformation_params, caption=None):
 
     parts = original_url.split("/")
 
+    # Check if the URL is from ImageKit (handle potential non-ImageKit URLs gracefully)
+    if len(parts) < 5 or parts[2] != 'ik.imagekit.io':
+        return original_url # Return original if not ImageKit
+
+    # Reconstruct ImageKit URL with transformation
     imagekit_id = parts[3]
     file_path = "/".join(parts[4:])
     base_url = "/".join(parts[:4])
@@ -115,7 +132,8 @@ def create_transformed_url(original_url, transformation_params, caption=None):
 def feed_page():
     st.title("🏠 Feed")
 
-    response = requests.get("http://localhost:8000/feed", headers=get_headers())
+    
+    response = requests.get(f"{API_BASE_URL}/feed", headers=get_headers())
     if response.status_code == 200:
         posts = response.json()["posts"]
 
@@ -133,28 +151,31 @@ def feed_page():
             with col2:
                 if post.get('is_owner', False):
                     if st.button("🗑️", key=f"delete_{post['id']}", help="Delete post"):
-                        # Delete the post
-                        response = requests.delete(f"http://localhost:8000/posts/{post['id']}", headers=get_headers())
-                        if response.status_code == 200:
-                            st.success("Post deleted!")
-                            st.rerun()
-                        else:
-                            st.error("Failed to delete post!")
+                        with st.spinner("Deleting..."):
+                            # Delete the post
+                            
+                            response = requests.delete(f"{API_BASE_URL}/posts/{post['id']}", headers=get_headers())
+                            if response.status_code == 200:
+                                st.success("Post deleted!")
+                                st.rerun()
+                            else:
+                                st.error("Failed to delete post!")
 
             # Uniform media display with caption overlay
             caption = post.get('caption', '')
             if post['file_type'] == 'image':
-                uniform_url = create_transformed_url(post['url'], "", caption)
+                uniform_url = create_transformed_url(post['url'], "w-400,h-400,cm-pad_resize", caption)
                 st.image(uniform_url, width=300)
             else:
                 # For videos: specify only height to maintain aspect ratio + caption overlay
-                uniform_video_url = create_transformed_url(post['url'], "w-400,h-200,cm-pad_resize,bg-blurred")
+                # Note: ImageKit video transformations are more limited than image ones.
+                uniform_video_url = post['url'] # Video transformation is often skipped for simplicity
                 st.video(uniform_video_url, width=300)
                 st.caption(caption)
 
             st.markdown("")  # Space between posts
     else:
-        st.error("Failed to load feed")
+        st.error("Failed to load feed. Is the backend running?")
 
 
 # Main app logic
