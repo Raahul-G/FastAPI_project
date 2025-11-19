@@ -55,3 +55,4 @@ This project demonstrates:
 The focus is purely educational: working through this codebase is intended to build intuition about FastAPI’s ergonomics, patterns, and tooling by doing rather than just reading theory.
 
 
+
