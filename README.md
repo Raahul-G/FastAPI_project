@@ -34,11 +34,11 @@ Once the server starts, open your browser at http://127.0.0.1:8000 to check the 
 
 ---
 
-![Feed](https://github.com/Raahul-G/FastAPI_project/blob/main/Images/Simple%20Social%20Feed.jpeg?raw=true)
+![Upload Page](https://github.com/Raahul-G/FastAPI_project/blob/main/Images/Simple%20Social%20Upload%20Page.jpeg?raw=true)
 
 ---
 
-![Upload](https://github.com/Raahul-G/FastAPI_project/blob/main/Images/Simple%20Social%20Upload.jpeg?raw=true)
+![Feed](https://github.com/Raahul-G/FastAPI_project/blob/main/Images/Simple%20Social%20Feed.jpeg?raw=true)
 
 ---
 
@@ -53,4 +53,5 @@ This project demonstrates:
 - Experimenting with async request handling and background tasks
 
 The focus is purely educational: working through this codebase is intended to build intuition about FastAPI’s ergonomics, patterns, and tooling by doing rather than just reading theory.
+
 
