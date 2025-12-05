@@ -30,6 +30,46 @@ Once the server starts, open your browser at http://127.0.0.1:8000 to check the 
 
 ---
 
+## Docker Setup (Alternative)
+
+You can also run this project using Docker for a containerized environment.
+
+### Option 1: Using Docker Compose (Recommended)
+
+1. **Build and start the containers**
+   ```bash
+   docker-compose up --build
+   ```
+
+2. **Access the application**
+   - FastAPI backend: http://localhost:8000
+   - FastAPI docs: http://localhost:8000/docs
+   - Streamlit frontend: http://localhost:8501
+
+3. **Stop the containers**
+   ```bash
+   docker-compose down
+   ```
+
+### Option 2: Using Docker CLI
+
+1. **Build the Docker image**
+   ```bash
+   docker build -t fastapi-project .
+   ```
+
+2. **Run the container**
+   ```bash
+   docker run -p 8000:8000 -p 8501:8501 fastapi-project
+   ```
+
+3. **Access the application**
+   - FastAPI backend: http://localhost:8000
+   - FastAPI docs: http://localhost:8000/docs
+   - Streamlit frontend: http://localhost:8501
+
+---
+
 ![Login Page](https://github.com/Raahul-G/FastAPI_project/blob/main/Images/Simple%20Social%20Login%20Page.jpeg?raw=true)
 
 ---

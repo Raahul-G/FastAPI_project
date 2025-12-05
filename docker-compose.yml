@@ -1,0 +1,23 @@
+services:
+  fastapi-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fastapi-streamlit-app
+    ports:
+      - "8000:8000" # FastAPI backend
+      - "8501:8501" # Streamlit frontend
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # Mount source code for development (optional - comment out for production)
+      - .:/app
+      # Persist SQLite database
+      - ./data:/app/data
+    restart: unless-stopped
+    # Add environment variables from .env file if it exists
+    # Uncomment the lines below if you create a .env file
+    env_file:
+      - .env
+    # Uncomment if you need to override the default command
+    # command: ./start.sh
